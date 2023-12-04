@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Item </title>
+</head>
+<body>
+    <form>
+        Item Name : <input type="text" id="name" >
+        Description : <input type="text" id="description" >
+        Price : <input type="text" id="price" >
+        Quantity : <input type="text" id="quantity" >
+        <input type="button" value="Submit" id="btn" onclick="addItem()">
+        <input type="reset" value="Clear">
+    </form>
+    <h2>Details</h2>
+    <div id="msg"></div><br>
+    <table border="2" id="table">
+        <tr>
+            <td class="col">Item Name</td>
+            <td class="col">Description</td>
+            <td class="col">Price</td>
+            <td class="col">Quantity</td>
+            <td class="col">Action</td>
+        </tr>
+    </table>
+    <script src="additem.js"></script>
+</body>
+</html>
