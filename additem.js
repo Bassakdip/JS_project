@@ -1,72 +1,117 @@
+async function crudcrud(event) {
+    event.preventDefault();
 
-var row = null;
-function addItem() {
-    var dataEntered = Data();
-    var readData = dataFromLocalStorage(dataEntered);
-    if(row == null){
-        insert(readData);
-        msg.innerHTML="Data insert";
+    const itemname1 = document.getElementById('itemName').value;
+    const description1 = document.getElementById('description').value;
+    const price1 = document.getElementById('price').value;
+    const quantity1 = document.getElementById('quantity').value;
+
+    const stock = {
+        itemname1,
+        description1,
+        price1,
+        quantity1
     }
-    else{
-        update();
-        msg.innerHTML="Data Update";
+
+    try {
+        const res = await axios.post("https://crudcrud.com/api/cb5715609ecb41f29f3cddfc8661cefe/Data", stock);
+        console.log(res.data);
+        showDataOnScreen(res.data);
     }
+    catch (err) {
+        console.log(err);
+    }
+}
+
+window.addEventListener("DOMContentLoaded", async () => {
+    try {
+        const res = await axios.get("https://crudcrud.com/api/cb5715609ecb41f29f3cddfc8661cefe/Data")
+        for (var i = 0; i < res.data.length; i++) {
+            showDataOnScreen(res.data[i]);
+        }
+    }
+    catch (err) {
+        console.log(err);
+    }
+})
+
+function showDataOnScreen(stock) {
+    if (!stock) {
+        console.error('undefined or null stock');
+        return;
+    }
+    let ul = document.getElementById('list');
+    let li = document.createElement('li');
+    let liText = document.createTextNode(`Name:${stock.itemname1}, Description:${stock.description1}, Price:${stock.price1}, Quantity:${stock.quantity1}`);
+    li.appendChild(liText);
+    ul.append(li);
+
+    let buy1 = document.createElement('button');
+    let buy1Name = document.createTextNode('BUY 1');
+    buy1.appendChild(buy1Name);
+    ul.append(buy1);
+
+    let buy2 = document.createElement('button');
+    let buy2Name = document.createTextNode('BUY 2');
+    buy2.appendChild(buy2Name);
+    ul.append(buy2);
+
+    let buy3 = document.createElement('button');
+    let buy3Name = document.createTextNode('BUY 3');
+    buy3.appendChild(buy3Name);
+    ul.append(buy3);
+
+    let deletebtn = document.createElement('button');
+    let deleteRow = document.createTextNode('Delete');
+    deletebtn.appendChild(deleteRow);
+    ul.append(deletebtn);
     
+
+    buy1.addEventListener('click', (e) => update(e, stock, 1));
+    buy2.addEventListener('click', (e) => update(e, stock, 2));
+    buy3.addEventListener('click', (e) => update(e, stock, 3));
+    deletebtn.addEventListener('click',(e)=>{
+        ul.removeChild(li);
+        deleteDataFromCrudCrud(stock._id);
+        
+    })
 }
 
-//Create data from form
-function Data() {
-    var itemName = document.getElementById("name").value;
-    var description = document.getElementById("description").value;
-    var price = document.getElementById("price").value;
-    var quantity = document.getElementById("quantity").value;
+async function update(event, data, buyQuan) {
+    try {
+        const newRes = await axios.get(`https://crudcrud.com/api/cb5715609ecb41f29f3cddfc8661cefe/Data/${data._id}`);
 
-    var arr = [itemName, description, price, quantity]
-    return arr;
-}
-function dataFromLocalStorage(dataEntered) {
-    var n = localStorage.setItem("name", dataEntered[0]);
-    var d = localStorage.setItem("description", dataEntered[1]);
-    var p = localStorage.setItem("price", dataEntered[2]);
-    var q = localStorage.setItem("quantity", dataEntered[3]);
+        let updataData = newRes.data;
+        let updatedObj = updataData[0];
 
-    //getting values from local to tabel
+        if (buyQuan > updatedObj.quantity1 && updatedObj.quantity1 !== 0) {
+            alert(`You have only ${updatedObj.quantity1} left`);
+            buyQuan = updatedObj.quantity1;
+        }
 
-    var n1 = localStorage.getItem("name", n);
-    var d1 = localStorage.getItem("description", d);
-    var p1 = localStorage.getItem("price", p);
-    var q1 = localStorage.getItem("quantity", q);
+        if (updataData.length === 0) {
+            alert('No Stock');
+            deleteDataFromCrudCrud(data._id);
+            location.reload();
+        } else {
+            const updatedRes = await axios.put(`https://crudcrud.com/api/cb5715609ecb41f29f3cddfc8661cefe/Data/${data._id}`, {
+                itemname1: updatedObj.itemname1,
+                description1: updatedObj.description1,
+                price1: updatedObj.price1,
+                quantity1: updatedObj.quantity1 - buyQuan,
+            });
 
-    var arr = [n1, d1, p1, q1]
-    return arr;
+            console.log(updatedRes.data); // You might want to handle the response as needed.
+        }
+    } catch (err) {
+        console.log(err);
+    }
 }
-function insert(readData) {
-    var row = table.insertRow();
-    row.insertCell(0).innerHTML = readData[0];
-    row.insertCell(1).innerHTML = readData[1];
-    row.insertCell(2).innerHTML = readData[2];
-    row.insertCell(3).innerHTML = readData[3];
-    row.insertCell(4).innerHTML = "<button onclick = edit(this)>BUY1</button><button onclick = remove(this)>BUY2</button>"
-}
-//edit
-function edit(td) {
-    row = td.parentElement.parentElement;
-    document.getElementById("name").value = row.Cells[0].innerHTML;
-    document.getElementById("description").value = row.Cells[1].innerHTML;
-    document.getElementById("price").value = row.Cells[2].innerHTML;
-    document.getElementById("quantity").value = row.Cells[3].innerHTML;
-}
-//update
-function update() {
-    row.Cells[0].innerHTML = document.getElementById("name").value;
-    row.Cells[1].innerHTML = document.getElementById("description").value;
-    row.Cells[2].innerHTML = document.getElementById("price").value;
-    row.Cells[3].innerHTML = document.getElementById("quantity").value;
 
-    row = null;
-}
-//delete
-function remove(td){
-    row = td.parentElement.parentElement;
-    document.getElementById("table").deleteRow(row.rowIndex)
+
+function deleteDataFromCrudCrud(id){
+    axios.delete(`https://crudcrud.com/api/cb5715609ecb41f29f3cddfc8661cefe/Data/${id}`)
+    .catch((err)=>{
+        console.log(err);
+    })
 }
