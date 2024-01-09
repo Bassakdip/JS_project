@@ -1,93 +1,87 @@
-const apiUrl ="https://crudcrud.com/api/03d2308f77764ac1bdf5bacfe467b8c9/Data";
+async function crudcrud(event) {
+    event.preventDefault();
 
-function handleFormSubmit(event) {
-  event.preventDefault();
-  const name = document.getElementById("name").value;
-  const description = document.getElementById("des").value;
-  const price = document.getElementById("price").value;
-  const quantity = document.getElementById("quantity").value;
-  addCandy(name, description, price, quantity);
-}
+    const itemname1 = document.getElementById('itemName').value;
+    const description1 = document.getElementById('description').value;
+    const price1 = document.getElementById('price').value;
+    const quantity1 = document.getElementById('quantity').value;
 
-async function addCandy(name, description, price, quantity) {
-  const candyData = {
-    name: name,
-    description: description,
-    price: price,
-    quantity: quantity,
-  };
-
-  try {
-    await axios.post(apiUrl, candyData);
-    await displayCandies();
-  } 
-  catch (error) {
-    console.error("Error adding candy:", error);
-  }
-}
-
-async function displayCandies() {
-  try {
-    const response = await axios.get(apiUrl);
-    console.log(response.data);
-    const data = response.data;
-    const candyList = document.getElementById("candy-list");
-    candyList.innerHTML = "";
-
-    data.forEach((candy) => {
-      const candyItem = document.createElement("div");
-      candyItem.innerHTML = `
-            <div>
-              <h2>${candy.name}</h2>
-              <p>${candy.description}</p>
-              <p>Price: ${candy.price} rs</p>
-              <p>Quantity: <span id="quantity-${candy._id}">${candy.quantity}</span></p>
-              <button onclick="buyCandy('${candy._id}', '${candy.name}', '${candy.description}', '${candy.price}', 1, '${candy.quantity}')">Buy 1</button>
-              <button onclick="buyCandy('${candy._id}', '${candy.name}', '${candy.description}','${candy.price}', 2, '${candy.quantity}')">Buy 2</button>
-              <button onclick="buyCandy('${candy._id}', '${candy.name}', '${candy.description}','${candy.price}', 3, '${candy.quantity}')">Buy 3</button>
-            </div>
-          `;
-
-      candyList.appendChild(candyItem);
-    });
-  } catch (error) {
-    console.error("Error fetching candies:", error);
-  }
-}
-
-async function buyCandy(
-    id,
-    name,
-    description,
-    price,
-    quantityToBuy,
-    currentQuantity
-  ) {
-    const updatedQuantity = currentQuantity - quantityToBuy;
-  
-    if (updatedQuantity >= 0) {
-      try {
-        await axios.put(`${apiUrl}/${id}`, {
-          quantity: updatedQuantity,
-          name: name,
-          description: description,
-          price: price,
-        });
-        displayCandies();
-        
-      } catch (error) {
-        console.error("Error updating candy quantity:", error);
-      }
-    } else {
-      try {
-        await axios.delete(`${apiUrl}/${id}`);
-        alert("Item not available");
-        await displayCandies(); 
-      } catch (err) {
-        console.error("Error deleting candy:", err);
-      }
+    const stock = {
+        itemname1,
+        description1,
+        price1,
+        quantity1
     }
-  }
-  
 
-displayCandies();
+    try {
+        const res = await axios.post("https://crudcrud.com/api/03d2308f77764ac1bdf5bacfe467b8c9/Data", stock);
+        console.log(res.data);
+        showDataOnScreen(res.data);
+    }
+    catch (err) {
+        console.log(err);
+    }
+}
+
+window.addEventListener("DOMContentLoaded", async () => {
+    try {
+        const res = await axios.get("https://crudcrud.com/api/03d2308f77764ac1bdf5bacfe467b8c9/Data")
+        for (var i = 0; i < res.data.length; i++) {
+            showDataOnScreen(res.data[i]);
+        }
+    }
+    catch (err) {
+        console.log(err);
+    }
+})
+
+function showDataOnScreen(stock) {
+
+    const parentNode = document.getElementById('list');
+    const childHTML = `<li id=${stock._id} > Item Name:-${stock.itemname1} - Description:- ${stock.description1} - Price:- ${stock.price1} - Quamtity:-${stock.quantity1}
+                        <button onclick="buyCandy('${stock._id}','${stock.itemname1}', '${stock.description1}', '${stock.price1}','${stock.quantity1}',1)">Buy 1</button> 
+                        <button onclick="buyCandy('${stock._id}','${stock.itemname1}', '${stock.description1}', '${stock.price1}','${stock.quantity1}',2)">Buy 2</button> 
+                        <button onclick="buyCandy('${stock._id}','${stock.itemname1}', '${stock.description1}', '${stock.price1}','${stock.quantity1}',3)">Buy 3</button> 
+                        <button onclick=deleteDataFromCrudCrud('${stock._id}')>Delete</button>
+                        </li>`
+    parentNode.innerHTML = parentNode.innerHTML + childHTML;
+}
+
+async function buyCandy(id,name,description,price,currentQuantity,buyQuantity){
+    const updatedQuantity = currentQuantity-buyQuantity;
+    const obj ={
+        itemname1: name,
+        description1: description,
+        price1: price,
+        quantity1: updatedQuantity
+    }
+    if(updatedQuantity>=0)
+    {
+        try{
+            await axios.put(`https://crudcrud.com/api/03d2308f77764ac1bdf5bacfe467b8c9/Data/${id}`,obj)
+            obj['_id']=id  
+            showDataOnScreen(obj);
+            removeUserOnScreen(id)
+        }
+        catch(err){
+            console.log(err);
+        }
+    }
+}
+
+async function deleteDataFromCrudCrud(id) {
+    try {
+        await axios.delete(`https://crudcrud.com/api/03d2308f77764ac1bdf5bacfe467b8c9/Data/${id}`)
+        removeUserOnScreen(id);
+    }
+    catch (err) {
+        console.log(err)
+    }
+}
+function removeUserOnScreen(id) {
+    const parentaNode = document.getElementById('list');
+    const deletedNode = document.getElementById(id);
+    if (deletedNode) {
+        parentaNode.removeChild(deletedNode)
+    }
+}
