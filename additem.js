@@ -1,117 +1,93 @@
-async function crudcrud(event) {
-    event.preventDefault();
+const apiUrl ="https://crudcrud.com/api/03d2308f77764ac1bdf5bacfe467b8c9/Data";
 
-    const itemname1 = document.getElementById('itemName').value;
-    const description1 = document.getElementById('description').value;
-    const price1 = document.getElementById('price').value;
-    const quantity1 = document.getElementById('quantity').value;
-
-    const stock = {
-        itemname1,
-        description1,
-        price1,
-        quantity1
-    }
-
-    try {
-        const res = await axios.post("https://crudcrud.com/api/cb5715609ecb41f29f3cddfc8661cefe/Data", stock);
-        console.log(res.data);
-        showDataOnScreen(res.data);
-    }
-    catch (err) {
-        console.log(err);
-    }
+function handleFormSubmit(event) {
+  event.preventDefault();
+  const name = document.getElementById("name").value;
+  const description = document.getElementById("des").value;
+  const price = document.getElementById("price").value;
+  const quantity = document.getElementById("quantity").value;
+  addCandy(name, description, price, quantity);
 }
 
-window.addEventListener("DOMContentLoaded", async () => {
-    try {
-        const res = await axios.get("https://crudcrud.com/api/cb5715609ecb41f29f3cddfc8661cefe/Data")
-        for (var i = 0; i < res.data.length; i++) {
-            showDataOnScreen(res.data[i]);
-        }
-    }
-    catch (err) {
-        console.log(err);
-    }
-})
+async function addCandy(name, description, price, quantity) {
+  const candyData = {
+    name: name,
+    description: description,
+    price: price,
+    quantity: quantity,
+  };
 
-function showDataOnScreen(stock) {
-    if (!stock) {
-        console.error('undefined or null stock');
-        return;
-    }
-    let ul = document.getElementById('list');
-    let li = document.createElement('li');
-    let liText = document.createTextNode(`Name:${stock.itemname1}, Description:${stock.description1}, Price:${stock.price1}, Quantity:${stock.quantity1}`);
-    li.appendChild(liText);
-    ul.append(li);
+  try {
+    await axios.post(apiUrl, candyData);
+    await displayCandies();
+  } 
+  catch (error) {
+    console.error("Error adding candy:", error);
+  }
+}
 
-    let buy1 = document.createElement('button');
-    let buy1Name = document.createTextNode('BUY 1');
-    buy1.appendChild(buy1Name);
-    ul.append(buy1);
+async function displayCandies() {
+  try {
+    const response = await axios.get(apiUrl);
+    console.log(response.data);
+    const data = response.data;
+    const candyList = document.getElementById("candy-list");
+    candyList.innerHTML = "";
 
-    let buy2 = document.createElement('button');
-    let buy2Name = document.createTextNode('BUY 2');
-    buy2.appendChild(buy2Name);
-    ul.append(buy2);
+    data.forEach((candy) => {
+      const candyItem = document.createElement("div");
+      candyItem.innerHTML = `
+            <div>
+              <h2>${candy.name}</h2>
+              <p>${candy.description}</p>
+              <p>Price: ${candy.price} rs</p>
+              <p>Quantity: <span id="quantity-${candy._id}">${candy.quantity}</span></p>
+              <button onclick="buyCandy('${candy._id}', '${candy.name}', '${candy.description}', '${candy.price}', 1, '${candy.quantity}')">Buy 1</button>
+              <button onclick="buyCandy('${candy._id}', '${candy.name}', '${candy.description}','${candy.price}', 2, '${candy.quantity}')">Buy 2</button>
+              <button onclick="buyCandy('${candy._id}', '${candy.name}', '${candy.description}','${candy.price}', 3, '${candy.quantity}')">Buy 3</button>
+            </div>
+          `;
 
-    let buy3 = document.createElement('button');
-    let buy3Name = document.createTextNode('BUY 3');
-    buy3.appendChild(buy3Name);
-    ul.append(buy3);
+      candyList.appendChild(candyItem);
+    });
+  } catch (error) {
+    console.error("Error fetching candies:", error);
+  }
+}
 
-    let deletebtn = document.createElement('button');
-    let deleteRow = document.createTextNode('Delete');
-    deletebtn.appendChild(deleteRow);
-    ul.append(deletebtn);
-    
-
-    buy1.addEventListener('click', (e) => update(e, stock, 1));
-    buy2.addEventListener('click', (e) => update(e, stock, 2));
-    buy3.addEventListener('click', (e) => update(e, stock, 3));
-    deletebtn.addEventListener('click',(e)=>{
-        ul.removeChild(li);
-        deleteDataFromCrudCrud(stock._id);
+async function buyCandy(
+    id,
+    name,
+    description,
+    price,
+    quantityToBuy,
+    currentQuantity
+  ) {
+    const updatedQuantity = currentQuantity - quantityToBuy;
+  
+    if (updatedQuantity >= 0) {
+      try {
+        await axios.put(`${apiUrl}/${id}`, {
+          quantity: updatedQuantity,
+          name: name,
+          description: description,
+          price: price,
+        });
+        displayCandies();
         
-    })
-}
-
-async function update(event, data, buyQuan) {
-    try {
-        const newRes = await axios.get(`https://crudcrud.com/api/cb5715609ecb41f29f3cddfc8661cefe/Data/${data._id}`);
-
-        let updataData = newRes.data;
-        let updatedObj = updataData[0];
-
-        if (buyQuan > updatedObj.quantity1 && updatedObj.quantity1 !== 0) {
-            alert(`You have only ${updatedObj.quantity1} left`);
-            buyQuan = updatedObj.quantity1;
-        }
-
-        if (updataData.length === 0) {
-            alert('No Stock');
-            deleteDataFromCrudCrud(data._id);
-            location.reload();
-        } else {
-            const updatedRes = await axios.put(`https://crudcrud.com/api/cb5715609ecb41f29f3cddfc8661cefe/Data/${data._id}`, {
-                itemname1: updatedObj.itemname1,
-                description1: updatedObj.description1,
-                price1: updatedObj.price1,
-                quantity1: updatedObj.quantity1 - buyQuan,
-            });
-
-            console.log(updatedRes.data); // You might want to handle the response as needed.
-        }
-    } catch (err) {
-        console.log(err);
+      } catch (error) {
+        console.error("Error updating candy quantity:", error);
+      }
+    } else {
+      try {
+        await axios.delete(`${apiUrl}/${id}`);
+        alert("Item not available");
+        await displayCandies(); 
+      } catch (err) {
+        console.error("Error deleting candy:", err);
+      }
     }
-}
+  }
+  
 
-
-function deleteDataFromCrudCrud(id){
-    axios.delete(`https://crudcrud.com/api/cb5715609ecb41f29f3cddfc8661cefe/Data/${id}`)
-    .catch((err)=>{
-        console.log(err);
-    })
-}
+displayCandies();
